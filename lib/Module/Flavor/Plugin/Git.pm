@@ -1,4 +1,7 @@
 package Module::Flavor::Plugin::Git;
+use strict;
+use warnings;
+use base 'Module::Flavor::Plugin';
 
 sub install {
     my ( $class, $pkg, $config ) = @_;

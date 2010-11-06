@@ -1,4 +1,7 @@
 package Module::Flavor::Plugin::TestMakefile;
+use strict;
+use warnings;
+use base 'Module::Flavor::Plugin';
 
 sub install {
     my ( $class, $pkg, $config ) = @_;

@@ -3,8 +3,7 @@ use strict;
 use warnings;
 use Cwd;
 use Text::Xslate;
-use Class::Trigger
-    qw(init before_create_skeleton after_create_skeleton finalize);
+use Module::Flavor::Trigger; 
 use Module::Pluggable::Object;
 use Module::Flavor::Util;
 use Module::Flavor::Template;
@@ -122,7 +121,7 @@ __END__
 
 =head1 NAME
 
-Module::Flavor -
+Module::Flavor - createa module skeleton
 
 =head1 SYNOPSIS
 
