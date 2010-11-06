@@ -23,12 +23,11 @@ sub new {
 
 sub generate {
     my ( $self, $module ) = @_;
-
     my $config = $self->load_config( $self->{options} || {} );
-    $self->call_trigger('init');
     $self->create_dist_dir($module);
     my $opts = $self->create_and_set_opts( $module, $config );
     $self->load_plugins($config);
+    $self->call_trigger('init');
 
     $self->call_trigger('before_create_skeleton');
     $self->create_skeleton( $self->{flavor_class}, $opts );
@@ -115,11 +114,12 @@ sub load_plugins {
 sub load_plugin {
     my ( $self, $plugin, $plugin_config ) = @_;
     my $module = Module::Flavor::Util::load_class($plugin);
-    $module->install( $self, $plugin_config );
+    $module->install( $self, $plugin_config || {} );
 }
 
 sub create_skeleton {
     my ( $self, $flavor_class, $opts ) = @_;
+    $opts->{config} = +{%{$opts->{config} || {}}, %{$self->{config}||{}}};
     $self->{__renderer}->render( $flavor_class, $opts );
 }
 
