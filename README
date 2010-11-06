@@ -5,7 +5,7 @@ INSTALLATION
 Module::Flavor installation is straightforward. If your CPAN shell is set up,
 you should just be able to do
 
-    % cpan Module::Flavor
+    % cpan Module::Flavor 
 
 Download it, unpack it, then build it as per the usual:
 
@@ -20,8 +20,8 @@ DOCUMENTATION
 
 Module::Flavor documentation is available as in POD. So you can do:
 
-    % perldoc Module::Flavor
+    % perldoc Module::Flavor 
 
 to read the documentation online with your favorite pager.
 
-dann
+
