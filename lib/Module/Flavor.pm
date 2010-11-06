@@ -79,11 +79,11 @@ sub create_dist_dir {
 }
 
 sub load_config {
-    my ( $self, $args ) = @_;
-    my $option_plugins = delete $args->{plugins} || []; 
+    my ( $self, $options ) = @_;
+    my $option_plugins = delete $options->{plugins} || []; 
     my $config = +{
         plugins => ['TestMakefile'],
-        %{$args},
+        %{$options},
     };
     push @{ $config->{plugins} }, @$option_plugins;
     my @plugins

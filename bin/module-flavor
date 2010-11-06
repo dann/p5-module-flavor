@@ -21,6 +21,8 @@ module-flavor [options] module_name
     module-flavor MyApp::Simple
 
     module-flavor --flavor Catalyst MyApp::Simple
+    
+    module-flavor --plugins=Git MyApp::Simple
 
 =cut
 
