@@ -7,7 +7,6 @@ requires(
     'Carp'                      => 0,
     'Cwd'                       => 0,
     'Text::Xslate'              => 0,
-    'Module::Pluggable::Object' => 0,
     'Getopt::Long'              => 0,
     'Pod::Usage'                => 0,
     'Exporter'                  => 0,

@@ -1,4 +1,4 @@
-package Module::Flavor::Template::Default;
+package Module::Flavor::Template::Module;
 1;
 
 =head1
@@ -12,8 +12,6 @@ Module::Setup::Flavor::Default - default flavor
 =cut
 
 __DATA__
-
-__DATA__
 ---
 file: Makefile.PL
 template: |
@@ -25,7 +23,7 @@ template: |
 
   );
   test_requires(
-      'Test::More'                   => 0.88,
+      'Test::More'  => 0.88,
   );
   use_test_base;
   auto_include;
@@ -123,13 +121,6 @@ template: |
   =head1 DESCRIPTION
 
   [% module %] is
-
-
-  =head1 SOURCE AVAILABILITY
-
-  This source is in Github:
-
-    http://github.com/dann/
 
   =head1 CONTRIBUTORS
 

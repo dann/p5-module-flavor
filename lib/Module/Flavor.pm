@@ -3,10 +3,10 @@ use strict;
 use warnings;
 use Cwd;
 use Text::Xslate;
-use Module::Flavor::Trigger; 
-use Module::Pluggable::Object;
+use Module::Flavor::Trigger;
 use Module::Flavor::Util;
 use Module::Flavor::Template;
+use Config::Tiny;
 
 our $VERSION = '0.01';
 
@@ -16,7 +16,7 @@ sub new {
     $self->{basedir} = Cwd::getcwd unless $args{basedir};
     $self->{flavor_class} = $self->_flavor_class( $args{flavor} );
 
-    $self->{__root_dir} = Cwd::getcwd;
+    $self->{__root_dir} = Cwd::getcwd unless $args{root_dir};
     $self->{__renderer} = $self->_create_renderer();
     $self;
 }
@@ -24,17 +24,17 @@ sub new {
 sub generate {
     my ( $self, $module ) = @_;
 
+    my $config = $self->load_config( $self->{options} || {} );
     $self->call_trigger('init');
-    my $config = $self->load_config;
     $self->create_dist_dir($module);
     my $opts = $self->create_and_set_opts( $module, $config );
-    $self->load_plugins;
+    $self->load_plugins($config);
 
     $self->call_trigger('before_create_skeleton');
     $self->create_skeleton( $self->{flavor_class}, $opts );
     $self->call_trigger('after_create_skeleton');
 
-    chdir File::Spec->catfile($self->{__root_dir}, $opts->{dist});
+    chdir File::Spec->catfile( $self->{__root_dir}, $opts->{dist} );
     $self->call_trigger('finalize');
 }
 
@@ -60,7 +60,7 @@ sub create_and_set_opts {
 
 sub _flavor_class {
     my ( $self, $flavor_name ) = @_;
-    return "Module::Flavor::Template::Default" unless $flavor_name;
+    return "Module::Flavor::Template::Module" unless $flavor_name;
 
     if ( $flavor_name =~ m/^\+(\w)/ ) {
         return $1;
@@ -79,23 +79,37 @@ sub create_dist_dir {
 }
 
 sub load_config {
-    # TODO Implement me!
-    return +{};
+    my ( $self, $args ) = @_;
+    my $option_plugins = delete $args->{plugins} || []; 
+    my $config = +{
+        plugins => ['TestMakefile'],
+        %{$args},
+    };
+    push @{ $config->{plugins} }, @$option_plugins;
+    my @plugins
+        = map { $self->resolve_plugin_name($_); } @{ $config->{plugins} };
+    $config->{plugins} = \@plugins;
+    $self->{config}    = $config;
+    $config;
+}
+
+sub resolve_plugin_name {
+    my ( $self, $plugin ) = @_;
+    if ( $plugin =~ /^\+(\w+)/ ) {
+        $plugin = $1;
+    }
+    else {
+        $plugin = "Module::Flavor::Plugin::${plugin}";
+    }
+    $plugin;
 }
 
 sub load_plugins {
     my ( $self, $config ) = @_;
-    my $plugins = $self->_collect_plugins();
+    my $plugins = $config->{plugins};
     for my $plugin (@$plugins) {
-        $self->load_plugin( $plugin, $config->{$plugin} );
+        $self->load_plugin( $plugin, $config->{$plugin});
     }
-}
-
-sub _collect_plugins {
-    my $locator = Module::Pluggable::Object->new(
-        search_path => ['Module::Flavor::Plugin'], );
-    my @plugins = sort { length $a <=> length $b } $locator->plugins;
-    \@plugins;
 }
 
 sub load_plugin {
