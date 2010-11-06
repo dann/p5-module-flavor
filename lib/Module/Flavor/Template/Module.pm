@@ -3,11 +3,10 @@ package Module::Flavor::Template::Module;
 
 =head1
 
-Module::Setup::Flavor::Default - default flavor
+Module::Flavor::Template::Module - default module flavor
 
 =head1 SYNOPSIS
 
-  $ module-setup --init new_flavor # default flavor class is this
 
 =cut
 
