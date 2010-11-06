@@ -7,3 +7,20 @@ use Module::Flavor::Script;
 
 Module::Flavor::Script->run;
 
+__END__
+
+=head1 NAME
+
+module-flavor - create a module skeleton
+
+=head1 SYNOPSIS
+
+module-flavor [options] module_name
+
+  Examples:
+    module-flavor MyApp::Simple
+
+    module-flavor --flavor Catalyst MyApp::Simple
+
+=cut
+

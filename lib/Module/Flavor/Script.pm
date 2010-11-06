@@ -7,15 +7,11 @@ use Pod::Usage;
 use Module::Flavor;
 
 sub run {
-    usage() unless @ARGV;
+    pod2usage(2) unless @ARGV;
     my $options = setup_options();
     my $module_flavor = Module::Flavor->new(%$options);
     my $module = $ARGV[0];
     $module_flavor->generate($module);
-}
-
-sub usage {
-    pod2usage(1);
 }
 
 sub setup_options {
@@ -30,19 +26,3 @@ sub setup_options {
 1;
 
 __END__
-
-=head1 NAME
-
-module-flavor - create a module skeleton
-
-=head1 SYNOPSIS
-
-module-flavor [options] module_name
-
-  Examples:
-    module-flavor MyApp::Simple
-
-    module-flavor --flavor Catalyst MyApp::Simple
-
-=cut
-
