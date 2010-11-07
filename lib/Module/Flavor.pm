@@ -22,7 +22,7 @@ sub new {
     $self->{flavor_class}
         = $self->_flavor_class( $self->{options}->{flavor} );
 
-    $self->{__renderer} = $self->_create_renderer();
+    $self->{__renderer}     = $self->_create_renderer();
     $self->{__configloader} = $self->_create_configloader();
     $self->{__pluginloader} = $self->_create_pluginloader();
     $self;
@@ -43,7 +43,7 @@ sub _create_pluginloader {
 sub generate {
     my ( $self, $module ) = @_;
     my $config = $self->load_config( $self->{options} );
-    $self->{config}    = $config;
+    $self->{config} = $config;
     $self->create_dist_dir($module);
     my $opts = $self->create_and_set_opts( $module, $config );
     $self->load_plugins($config);
@@ -51,6 +51,7 @@ sub generate {
 
     $self->change_to_dist_dir($opts);
     $self->call_trigger('before_create_skeleton');
+
     $self->create_skeleton( $self->{flavor_class}, $opts );
     $self->call_trigger('after_create_skeleton');
 
@@ -122,7 +123,7 @@ sub load_config {
 
 sub load_plugins {
     my ( $self, $config ) = @_;
-    $self->{__pluginloader}->load_plugins($self, $config);
+    $self->{__pluginloader}->load_plugins( $self, $config );
 }
 
 1;
