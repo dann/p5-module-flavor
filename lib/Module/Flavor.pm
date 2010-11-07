@@ -1,11 +1,14 @@
 package Module::Flavor;
 use strict;
 use warnings;
+use Carp ();
 use Cwd;
 use Text::Xslate;
 use Module::Flavor::Trigger;
 use Module::Flavor::Util;
 use Module::Flavor::Template;
+use File::Path;
+use File::Spec;
 use Config::Tiny;
 
 our $VERSION = '0.01';
@@ -24,7 +27,7 @@ sub new {
 
 sub generate {
     my ( $self, $module ) = @_;
-    my $config = $self->load_config( $self->{options});
+    my $config = $self->load_config( $self->{options} );
     $self->create_dist_dir($module);
     my $opts = $self->create_and_set_opts( $module, $config );
     $self->load_plugins($config);
@@ -85,22 +88,50 @@ sub create_dist_dir {
     my ( $self, $module ) = @_;
     my @pkg = split /::/, $module;
     my $dist = join "-", @pkg;
-    mkdir File::Spec->catfile( $self->{basedir}, $dist ), 0777;
+    File::Path::mkpath( File::Spec->catfile( $self->{basedir}, $dist ),
+        1, 0777 );
 }
 
 sub load_config {
     my ( $self, $options ) = @_;
     my $option_plugins = delete $options->{plugins} || [];
-    my $config = +{
-        plugins => ['TestMakefile'],
-        %{$options},
-    };
+    my $config = $self->load_config_file($options);
+    $config = +{ %{$config}, %{$options}, };
+    $config->{plugins} ||= [];
+    my @enabled_plugins = split ',', $config->{plugins}->{enable}
+        if $config->{plugins}->{enable};
+    $config->{plugins} = \@enabled_plugins;
     push @{ $config->{plugins} }, @$option_plugins;
     my @plugins
         = map { $self->resolve_plugin_name($_); } @{ $config->{plugins} };
     $config->{plugins} = \@plugins;
     $self->{config}    = $config;
     $config;
+}
+
+sub load_config_file {
+    my ( $self, $options ) = @_;
+    my $default_config_path = $self->_create_default_config_if_neccessary;
+    my $config_file_path    = $options->{config} || $default_config_path;
+    my $config              = Config::Tiny->read($config_file_path);
+    $config;
+}
+
+sub _create_default_config_if_neccessary {
+    my $self = shift;
+    my $default_config_path
+        = File::Spec->catfile( $ENV{HOME}, '.module-flavor', 'config.ini' );
+    unless ( -e $default_config_path ) {
+        warn "Creating default config to $default_config_path";
+        File::Path::mkpath(
+            File::Spec->catfile( $ENV{HOME}, '.module-flavor' ),
+            1, 0777 );
+        open my $out, ">", $default_config_path
+            or die "$default_config_path: $!";
+        print $out "[plugins]\nenable=TestMakefile,Git\n";
+        close $out;
+    }
+    $default_config_path;
 }
 
 sub resolve_plugin_name {

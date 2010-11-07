@@ -4,6 +4,7 @@ use Text::Xslate;
 use YAML;
 use File::Spec;
 use File::Basename ();
+use File::Path;
 use ExtUtils::MakeMaker qw(prompt);
 
 sub new {

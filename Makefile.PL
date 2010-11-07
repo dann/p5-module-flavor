@@ -23,6 +23,7 @@ tests 't/*.t';
 requires(
     'Carp'                      => 0,
     'Cwd'                       => 0,
+    'Config::Tiny'              => 0,
     'Text::Xslate'              => 0,
     'Getopt::Long'              => 0,
     'Pod::Usage'                => 0,
