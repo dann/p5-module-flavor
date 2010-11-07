@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Module::Flavor;
+use File::Spec;
+use FindBin;
+use lib File::Spec->catfile($FindBin::Bin, '..', 'eg', 'lib');
+
+main();
+exit;
+
+sub main {
+    my $options = {
+        'flavor' => '+MyFlavor',
+        'plugins' => ['TestMakefile', 'Git'],
+    };
+    
+    my $module_flavor = Module::Flavor->new( options => $options );
+    my $module        = $ARGV[0];
+    $module_flavor->generate($module);
+}
+
+__END__
