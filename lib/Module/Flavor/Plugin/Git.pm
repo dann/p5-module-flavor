@@ -4,8 +4,8 @@ use warnings;
 use base 'Module::Flavor::Plugin';
 
 sub install {
-    my ( $class, $pkg, $config ) = @_;
-    $pkg->add_trigger(
+    my ( $class, $context, $config ) = @_;
+    $context->add_trigger(
         after_create_skeleton => sub {
             !system 'git init'                       or die $?;
             !system 'git add *.*'                    or die $?;
