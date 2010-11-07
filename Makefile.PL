@@ -32,6 +32,7 @@ requires(
     'YAML'                      => 0,
     'File::Spec'                => 0,
     'File::Basename'            => 0,
+    'File::Path'                => 0,
     'ExtUtils::MakeMaker'       => 0,
 );
 test_requires( 'Test::More' => 0.88, );
