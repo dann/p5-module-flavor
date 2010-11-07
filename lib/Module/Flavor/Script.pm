@@ -18,8 +18,10 @@ sub setup_options {
     my $options = {};
     GetOptions(
         'flavor=s'  => \( $options->{flavor} ),
-        'plugins=s@' => \( $options->{plugins} ),
+        'plugins=s' => \( $options->{plugins} ),
     );
+    my @plugins = split ',', $options->{plugins};
+    $options->{plugins} = \@plugins;
     $options;
 }
 

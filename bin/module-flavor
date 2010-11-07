@@ -20,9 +20,9 @@ module-flavor [options] module_name
   Examples:
     module-flavor MyApp::Simple
 
-    module-flavor --flavor Catalyst MyApp::Simple
+    module-flavor --flavor=+MyFlavor MyApp::Simple
     
-    module-flavor --plugins=Git MyApp::Simple
+    module-flavor --plugins=Git,TestMakefile MyApp::Simple
 
 =cut
 
