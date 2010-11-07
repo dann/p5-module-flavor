@@ -6,7 +6,7 @@ use base 'Module::Flavor::Plugin';
 sub install {
     my ( $class, $pkg, $config ) = @_;
     $pkg->add_trigger(
-        finalize => sub {
+        after_create_skeleton => sub {
             !system "perl Makefile.PL" or die $?;
             !system 'make test'        or die $?;
             !system 'make manifest'    or die $?;

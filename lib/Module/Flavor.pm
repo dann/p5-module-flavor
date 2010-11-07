@@ -13,28 +13,40 @@ our $VERSION = '0.01';
 sub new {
     my ( $class, %args ) = @_;
     my $self = bless {%args}, $class;
-    $self->{basedir} = Cwd::getcwd unless $args{basedir};
-    $self->{flavor_class} = $self->_flavor_class( $args{flavor} );
+    $self->{options} = +{}         unless $args{options};
+    $self->{basedir} = Cwd::getcwd unless $self->{options}->{basedir};
+    $self->{flavor_class}
+        = $self->_flavor_class( $self->{options}->{flavor} );
 
-    $self->{__root_dir} = Cwd::getcwd unless $args{root_dir};
     $self->{__renderer} = $self->_create_renderer();
     $self;
 }
 
 sub generate {
     my ( $self, $module ) = @_;
-    my $config = $self->load_config( $self->{options} || {} );
+    my $config = $self->load_config( $self->{options});
     $self->create_dist_dir($module);
     my $opts = $self->create_and_set_opts( $module, $config );
     $self->load_plugins($config);
     $self->call_trigger('init');
 
+    $self->change_to_dist_dir($opts);
     $self->call_trigger('before_create_skeleton');
     $self->create_skeleton( $self->{flavor_class}, $opts );
     $self->call_trigger('after_create_skeleton');
 
-    chdir File::Spec->catfile( $self->{__root_dir}, $opts->{dist} );
+    $self->change_to_basedir();
     $self->call_trigger('finalize');
+}
+
+sub change_to_dist_dir {
+    my ( $self, $opts ) = @_;
+    chdir File::Spec->catfile( $self->{basedir}, $opts->{dist} );
+}
+
+sub change_to_basedir {
+    my $self = shift;
+    chdir File::Spec->catfile( $self->{basedir} );
 }
 
 sub create_and_set_opts {
@@ -61,7 +73,7 @@ sub _flavor_class {
     my ( $self, $flavor_name ) = @_;
     return "Module::Flavor::Template::Module" unless $flavor_name;
 
-    if ( $flavor_name =~ m/^\+(\w)/ ) {
+    if ( $flavor_name =~ /^\+(.*)/ ) {
         return $1;
     }
     else {
@@ -73,13 +85,12 @@ sub create_dist_dir {
     my ( $self, $module ) = @_;
     my @pkg = split /::/, $module;
     my $dist = join "-", @pkg;
-    mkdir $dist, 0777;
-    chdir $dist;
+    mkdir File::Spec->catfile( $self->{basedir}, $dist ), 0777;
 }
 
 sub load_config {
     my ( $self, $options ) = @_;
-    my $option_plugins = delete $options->{plugins} || []; 
+    my $option_plugins = delete $options->{plugins} || [];
     my $config = +{
         plugins => ['TestMakefile'],
         %{$options},
@@ -94,7 +105,7 @@ sub load_config {
 
 sub resolve_plugin_name {
     my ( $self, $plugin ) = @_;
-    if ( $plugin =~ /^\+(\w+)/ ) {
+    if ( $plugin =~ /^\+(.*)/ ) {
         $plugin = $1;
     }
     else {
@@ -107,7 +118,7 @@ sub load_plugins {
     my ( $self, $config ) = @_;
     my $plugins = $config->{plugins};
     for my $plugin (@$plugins) {
-        $self->load_plugin( $plugin, $config->{$plugin});
+        $self->load_plugin( $plugin, $config->{$plugin} );
     }
 }
 
@@ -119,7 +130,8 @@ sub load_plugin {
 
 sub create_skeleton {
     my ( $self, $flavor_class, $opts ) = @_;
-    $opts->{config} = +{%{$opts->{config} || {}}, %{$self->{config}||{}}};
+    $opts->{config}
+        = +{ %{ $opts->{config} || {} }, %{ $self->{config} || {} } };
     $self->{__renderer}->render( $flavor_class, $opts );
 }
 
