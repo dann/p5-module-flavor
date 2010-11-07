@@ -62,13 +62,13 @@ sub _write_to_file {
 
     my $dir = File::Basename::dirname($path);
     unless ( -e $dir ) {
-        warn "Creating directory $dir\n";
+        print "Creating directory $dir\n";
         File::Path::mkpath( $dir, 1, 0777 );
     }
 
     my $template = $skelton->{template};
 
-    warn "Creating $path\n";
+    print "Creating $path\n";
     open my $out, ">", $path or die "$path: $!";
     print $out $template;
     close $out;

@@ -96,11 +96,11 @@ sub load_config {
     my ( $self, $options ) = @_;
     my $option_plugins = delete $options->{plugins} || [];
     my $config = $self->load_config_file($options);
-    $config = +{ %{$config}, %{$options}, };
+    $config = +{ %{ $config->{config} || {} }, %{$options}, };
     $config->{plugins} ||= [];
-    my @enabled_plugins = split ',', $config->{plugins}->{enable}
-        if $config->{plugins}->{enable};
-    $config->{plugins} = \@enabled_plugins;
+    my @enabled_plugins = split ',', $config->{plugins}
+        if $config->{plugins};
+    $config->{plugins} = \@enabled_plugins if @enabled_plugins;
     push @{ $config->{plugins} }, @$option_plugins;
     my @plugins
         = map { $self->resolve_plugin_name($_); } @{ $config->{plugins} };
@@ -122,13 +122,18 @@ sub _create_default_config_if_neccessary {
     my $default_config_path
         = File::Spec->catfile( $ENV{HOME}, '.module-flavor', 'config.ini' );
     unless ( -e $default_config_path ) {
-        warn "Creating default config to $default_config_path";
+        print "Creating default config to $default_config_path\n";
         File::Path::mkpath(
             File::Spec->catfile( $ENV{HOME}, '.module-flavor' ),
             1, 0777 );
         open my $out, ">", $default_config_path
             or die "$default_config_path: $!";
-        print $out "[plugins]\nenable=TestMakefile,Git\n";
+        print $out "[config]\n";
+        print $out "# Comma Separated list of plugins to enable\n";
+        print $out "# plugins=TestMakefile,Git\n";
+        print $out "plugins=TestMakefile\n";
+        print $out "author=your name\n";
+        print $out "email=your email\n";
         close $out;
     }
     $default_config_path;
@@ -161,8 +166,8 @@ sub load_plugin {
 
 sub create_skeleton {
     my ( $self, $flavor_class, $opts ) = @_;
-    $opts->{config}
-        = +{ %{ $opts->{config} || {} }, %{ $self->{config} || {} } };
+    $opts->{config} = +{ %{ $opts->{config} || {} },
+        %{ $self->{config}->{config} || {} } };
     $self->{__renderer}->render( $flavor_class, $opts );
 }
 
