@@ -4,12 +4,13 @@ use warnings;
 use Carp ();
 use Cwd;
 use Text::Xslate;
+use File::Path;
+use File::Spec;
 use Module::Flavor::Trigger;
 use Module::Flavor::Util;
 use Module::Flavor::Template;
-use File::Path;
-use File::Spec;
-use Config::Tiny;
+use Module::Flavor::ConfigLoader;
+use Module::Flavor::PluginLoader;
 
 our $VERSION = '0.01';
 
@@ -22,12 +23,27 @@ sub new {
         = $self->_flavor_class( $self->{options}->{flavor} );
 
     $self->{__renderer} = $self->_create_renderer();
+    $self->{__configloader} = $self->_create_configloader();
+    $self->{__pluginloader} = $self->_create_pluginloader();
     $self;
+}
+
+sub _create_configloader {
+    Module::Flavor::ConfigLoader->new;
+}
+
+sub _create_renderer {
+    Module::Flavor::Template->new;
+}
+
+sub _create_pluginloader {
+    Module::Flavor::PluginLoader->new;
 }
 
 sub generate {
     my ( $self, $module ) = @_;
     my $config = $self->load_config( $self->{options} );
+    $self->{config}    = $config;
     $self->create_dist_dir($module);
     my $opts = $self->create_and_set_opts( $module, $config );
     $self->load_plugins($config);
@@ -40,6 +56,13 @@ sub generate {
 
     $self->change_to_basedir();
     $self->call_trigger('finalize');
+}
+
+sub create_skeleton {
+    my ( $self, $flavor_class, $opts ) = @_;
+    $opts->{config} = +{ %{ $opts->{config} || {} },
+        %{ $self->{config}->{config} || {} } };
+    $self->{__renderer}->render( $flavor_class, $opts );
 }
 
 sub change_to_dist_dir {
@@ -94,85 +117,12 @@ sub create_dist_dir {
 
 sub load_config {
     my ( $self, $options ) = @_;
-    my $option_plugins = delete $options->{plugins} || [];
-    my $config = $self->load_config_file($options);
-    $config = +{ %{ $config->{config} || {} }, %{$options}, };
-    $config->{plugins} ||= [];
-    my @enabled_plugins = split ',', $config->{plugins}
-        if $config->{plugins};
-    $config->{plugins} = \@enabled_plugins if @enabled_plugins;
-    push @{ $config->{plugins} }, @$option_plugins;
-    my @plugins
-        = map { $self->resolve_plugin_name($_); } @{ $config->{plugins} };
-    $config->{plugins} = \@plugins;
-    $self->{config}    = $config;
-    $config;
-}
-
-sub load_config_file {
-    my ( $self, $options ) = @_;
-    my $default_config_path = $self->_create_default_config_if_neccessary;
-    my $config_file_path    = $options->{config} || $default_config_path;
-    my $config              = Config::Tiny->read($config_file_path);
-    $config;
-}
-
-sub _create_default_config_if_neccessary {
-    my $self = shift;
-    my $default_config_path
-        = File::Spec->catfile( $ENV{HOME}, '.module-flavor', 'config.ini' );
-    unless ( -e $default_config_path ) {
-        print "Creating default config to $default_config_path\n";
-        File::Path::mkpath(
-            File::Spec->catfile( $ENV{HOME}, '.module-flavor' ),
-            1, 0777 );
-        open my $out, ">", $default_config_path
-            or die "$default_config_path: $!";
-        print $out "[config]\n";
-        print $out "# Comma Separated list of plugins to enable\n";
-        print $out "# plugins=TestMakefile,Git\n";
-        print $out "plugins=TestMakefile\n";
-        print $out "author=your name\n";
-        print $out "email=your email\n";
-        close $out;
-    }
-    $default_config_path;
-}
-
-sub resolve_plugin_name {
-    my ( $self, $plugin ) = @_;
-    if ( $plugin =~ /^\+(.*)/ ) {
-        $plugin = $1;
-    }
-    else {
-        $plugin = "Module::Flavor::Plugin::${plugin}";
-    }
-    $plugin;
+    return $self->{__configloader}->load_config($options);
 }
 
 sub load_plugins {
     my ( $self, $config ) = @_;
-    my $plugins = $config->{plugins};
-    for my $plugin (@$plugins) {
-        $self->load_plugin( $plugin, $config->{$plugin} );
-    }
-}
-
-sub load_plugin {
-    my ( $self, $plugin, $plugin_config ) = @_;
-    my $module = Module::Flavor::Util::load_class($plugin);
-    $module->install( $self, $plugin_config || {} );
-}
-
-sub create_skeleton {
-    my ( $self, $flavor_class, $opts ) = @_;
-    $opts->{config} = +{ %{ $opts->{config} || {} },
-        %{ $self->{config}->{config} || {} } };
-    $self->{__renderer}->render( $flavor_class, $opts );
-}
-
-sub _create_renderer {
-    Module::Flavor::Template->new;
+    $self->{__pluginloader}->load_plugins($self, $config);
 }
 
 1;
